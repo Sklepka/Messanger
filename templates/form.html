@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Skillbox Chat</title>
+    <title>Messenger Chat</title>
 
     <!-- Подключение библиотеки jQuery-->
     <script
@@ -56,9 +56,19 @@
 
            // Каждую секунду вызывать loadMessages
            setInterval(loadMessages, 1000);
+
+        var btn = document.getElementById("button");
+        btn.addEventListener('click', () => {
+           $.get(
+            "/delete_messages",
+           );
+        }
+        )
         });
 
-    </script>
+        // 
+       
+        </script>
 </head>
 <body>
     <!-- Интерфейс: имя, окно чата, текст сообщения -->
@@ -69,5 +79,8 @@
 
     <br/>
     <input id="text" type="text" placeholder="Текст сообщения">
+    <button id="button" >
+        Очистить 
+    </button>
 </body>
 </html>

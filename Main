@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template
 import datetime
 import json
+import webbrowser
 
 app = Flask(__name__)  # Создать новое приложение
 
@@ -8,10 +9,22 @@ app = Flask(__name__)  # Создать новое приложение
 DB_FILE = "db.json"
 
 
-def load_messages():
-    with open(DB_FILE, "r") as  json_file:
+def load_messages(): # Загрузка сообщений для JS
+    with open(DB_FILE, "r") as json_file:
         data = json.load(json_file)
     return data["messages"]
+
+
+@app.route("/delete_messages")
+def delete_messages(): # Удаление сообщений для JS
+    all_messages.clear()
+
+    data = {
+        "messages": all_messages,
+    }
+    
+    with open(DB_FILE, "w") as json_file:
+        json.dump(data, json_file)
 
 
 all_messages = load_messages()  # Список всех сообщений в мессенджере
@@ -21,13 +34,28 @@ def save_messages():
     data = {
         "messages": all_messages,
     }
-    
-    with open(DB_FILE, "w") as  json_file:
+
+    with open(DB_FILE, "w") as json_file:
         json.dump(data, json_file)
 
-@app.route("/")
+
+@app.route("/") # Начальная страница
 def index_page():
     return "Hello <b>User</b>!"
+
+
+@app.route("/length_all_messages") # Страница с количеством сообщений
+def length_all_messages():
+    return len(all_messages)
+
+
+@app.route("/Error_sender") # Страница ошибки по имени
+def error_page_sender():
+    return (f"Length Error <br> Имя должно содержать не менее 3 символов и не более 100 символов")
+
+@app.route("/Error_text") # Страница ошибки по сообщению
+def error_page_text():
+    return (f"Length Error <br> Сообщение должно содержать не менее 1 символов и не более 3000 символов")
 
 
 # Получить список всех сообщений
@@ -36,9 +64,11 @@ def index_page():
 def get_messages():
     return {"messages": all_messages}
 
+
 # Функция для вывода сообщений
 def print_message(message):
     print(f"— [{message['sender']}] {message['text']} / {message['time']}")
+
 
 # Функция для вызовы формы.html
 @app.route("/chat")
@@ -49,8 +79,20 @@ def display_chat():
 @app.route("/send_message")
 def send_message():
     # получить из запроса имя отправителя и текст
-    sender = request.args["name"]
-    text = request.args["text"]
+
+    sender = request.args["name"].replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;") # Обход XSS уязвимости, замена символов
+    if len(sender) < 3 or len(sender) > 100: # Проверка на количество вводимых символов
+        try:
+            raise ValueError('Получили - ValueError')
+        except ValueError as e:
+            webbrowser.open('127.0.0.1:5000/Error_sender') # ToDo: вставить после хостинга актуальную ссылку
+
+    text = request.args["text"].replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;") # Обход XSS уязвимости, замена символов
+    if len(text) < 1 or len(text) > 3000: # Проверка на количество вводимых символов
+        try:
+            raise ValueError('Получили - ValueError')
+        except ValueError as e:
+            webbrowser.open('127.0.0.1:5000/Error_text') # ToDo: вставить после хостинга актуальную ссылку
     add_message(sender, text)
     save_messages()
 
@@ -62,7 +104,7 @@ def add_message(sender, text):
     new_message = {
         "sender": sender,
         "text": text,
-        "time": datetime.datetime.now().strftime("%H:%M %d-%m-%Y") 
+        "time": datetime.datetime.now().strftime("%H:%M %d-%m-%Y")
     }
     # .append = добавление в список
     all_messages.append(new_message)
