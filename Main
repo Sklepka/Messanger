@@ -8,7 +8,6 @@ app = Flask(__name__)  # Создать новое приложение
 
 DB_FILE = "db.json"
 
-
 def load_messages(): # Загрузка сообщений для JS
     with open(DB_FILE, "r") as json_file:
         data = json.load(json_file)
